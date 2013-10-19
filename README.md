@@ -1,6 +1,6 @@
 # Arduino-Toggl
 
-Arduio-Toggl is a simple Arduino and C# applictation which display current running time entry on LCD.
+Arduio-Toggl is a simple applictation which displays current running time entry on LCD using C# and Arduino.
 
 ![arduino-toggl](http://i.imgur.com/e4t1QE9.jpg?)
 
