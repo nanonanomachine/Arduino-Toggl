@@ -13,10 +13,17 @@ namespace Arduino_Toggl
 {
     class StatusChecker
     {
+        #region Private member variables
+
         private DateTime _refreshTime;
         private bool _isNoTimeEntry;
 
-        #region Members
+        #endregion
+
+        #region Public member variables
+
+        public SerialPort mySerialPort { get; private set; }
+
         /// <summary>
         /// Time entry desscription
         /// </summary>
@@ -39,6 +46,10 @@ namespace Arduino_Toggl
         {
             Description = string.Empty;
             EntryTime = DateTime.Now;
+            
+            // Set Serial Port
+            mySerialPort = new SerialPort(Settings.Default.SerialPort);
+            mySerialPort.BaudRate = 9600;
 
             GetTimeEntry();
         }
@@ -61,11 +72,6 @@ namespace Arduino_Toggl
             Console.WriteLine("{0} Checking status {0}.",
                 DateTime.Now.ToString("h:mm:ss.fff"));
 #endif
-            // Set Serial Port
-            SerialPort mySerialPort = new SerialPort(Settings.Default.SerialPort);
-            mySerialPort.BaudRate = 9600;
-            mySerialPort.Open();
-
             // Refresh per minuite
             TimeSpan span = new TimeSpan(0, 0, 1, 0, 0);
 
@@ -80,8 +86,6 @@ namespace Arduino_Toggl
 
             // Send data
             mySerialPort.Write(Description.PadLeft(Settings.Default.MaxCharacterPerLine) + duration.ToString(@"hh\:mm\:ss").PadLeft(Settings.Default.MaxCharacterPerLine));
-
-            mySerialPort.Close();
         }
 
         #endregion
@@ -93,38 +97,45 @@ namespace Arduino_Toggl
         /// </summary>
         private void GetTimeEntry()
         {
-            // Get Time Entries in the last 8 hours
-            var rte = new Toggl.QueryObjects.TimeEntryParams();
-            rte.StartDate = DateTime.Now.AddHours(-8);
-            rte.EndDate = DateTime.Now;
-
-            Toggl.Services.TimeEntryService timeEntrySrv = new Toggl.Services.TimeEntryService(Settings.Default.ApiKey);
-            var entries = timeEntrySrv.List(rte);
-
-            // Check current Time Entry
-            if (entries.Count() > 0)
+            try
             {
-                TimeEntry currentEntry = entries.Last();
-                if (currentEntry.Duration < 0)
+                // Get Time Entries in the last 8 hours
+                var rte = new Toggl.QueryObjects.TimeEntryParams();
+                rte.StartDate = DateTime.Now.AddHours(-8);
+                rte.EndDate = DateTime.Now;
+
+                Toggl.Services.TimeEntryService timeEntrySrv = new Toggl.Services.TimeEntryService(Settings.Default.ApiKey);
+                var entries = timeEntrySrv.List(rte);
+
+                // Check current Time Entry
+                if (entries.Count() > 0)
                 {
-                    Description = ConvertString(currentEntry.Description);
-                    EntryTime = Convert.ToDateTime(currentEntry.Start);
-                    _isNoTimeEntry = false;
+                    TimeEntry currentEntry = entries.Last();
+                    if (currentEntry.Duration < 0)
+                    {
+                        Description = ConvertString(currentEntry.Description);
+                        EntryTime = Convert.ToDateTime(currentEntry.Start);
+                        _isNoTimeEntry = false;
+                    }
+                    else if (!_isNoTimeEntry)
+                    {
+                        Description = "No Time Entry";
+                        EntryTime = DateTime.Now;
+                        _isNoTimeEntry = true;
+                    }
                 }
                 else if (!_isNoTimeEntry)
                 {
                     Description = "No Time Entry";
                     EntryTime = DateTime.Now;
-                    _isNoTimeEntry = true;
                 }
-            }
-            else if (!_isNoTimeEntry)
-            {
-                Description = "No Time Entry";
-                EntryTime = DateTime.Now;
-            }
 
-            _refreshTime = DateTime.Now;
+                _refreshTime = DateTime.Now;
+            }
+            catch
+            {
+                Console.WriteLine("Failed to get time entry");
+            }
         }
 
         /// <summary>
