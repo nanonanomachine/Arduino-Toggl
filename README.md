@@ -16,3 +16,6 @@ Arduio-Toggl is a simple Arduino and C# applictation which display current runni
 8. Build & Run
 
 If you start time entry via Web or Native application, LCD displays it. Refresh rate is one minuite.
+
+## More Info
+This application uses [C--Toggl-Api-Client](https://github.com/johnbabb/C--Toggl-Api-Client) .
