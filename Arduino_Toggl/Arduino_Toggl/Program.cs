@@ -29,17 +29,18 @@ namespace Arduino_Toggl
         static extern bool
             SetConsoleCtrlHandler(HandlerRoutine Handler, bool Add);
 
-        // Delegate which sends HanlerRoutine to SetConsoleCtrlHandler function
-        delegate bool HandlerRoutine(CtrlTypes CtrlType);
+        // Delegate which sends HandlerRoutine to SetConsoleCtrlHandler function
+        private delegate bool HandlerRoutine(CtrlTypes CtrlType);
 
-        HandlerRoutine myHandlerOnExit;
+        //static HandlerRoutine myHandlerOnExit;
+        static HandlerRoutine myHandlerOnExit;
 
         /// <summary>
         /// HandlerRoutine
         /// </summary>
         /// <param name="ctrlType"></param>
         /// <returns></returns>
-        bool myHandler(CtrlTypes ctrlType)
+        private bool myHandler(CtrlTypes ctrlType)
         {
             // Close serial port connection
             if (statusChecker.mySerialPort.IsOpen)
@@ -67,7 +68,7 @@ namespace Arduino_Toggl
         {
             // Set myHandler
             myHandlerOnExit = new HandlerRoutine(myHandler);
-            SetConsoleCtrlHandler(myHandler, true);
+            SetConsoleCtrlHandler(myHandlerOnExit, true);
 
             statusChecker = new StatusChecker();
         }
